@@ -1,9 +1,11 @@
 # Simulacija tkanina
+![Scena 3](https://raw.githubusercontent.com/filipbudisa/RG-2019-Lab3/master/res/lab.png)
+
 Simulacija tkanina pomoću sistema opruga.
 
 ![opruge](https://www.ics.uci.edu/~shz/courses/cs114/docs/proj3/images/fig1.jpg)
 
-*Izvor: [UCI CS114: Cloth Simulation using Mass-Spring System](https://www.ics.uci.edu/~shz/courses/cs114/docs/proj3/index.html)*
+*Izvor slike i ideje: [UCI CS114: Cloth Simulation using Mass-Spring System](https://www.ics.uci.edu/~shz/courses/cs114/docs/proj3/index.html)*
 
 ## Dependencies
 Nakon kloniranja repozitorija, potrebno je učitat git pod-repozitorije. Konkretno, koristi se [Vulkan Memory Allocator](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator) za lakše upravljanje memorijom na grafičkoj kartici. 
