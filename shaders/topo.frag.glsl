@@ -18,16 +18,9 @@ layout(set = 1, binding = 0) uniform UniformBufferObject {
     vec3 eyePos;
 } lights;
 
-layout(set = 2, binding = 0) uniform sampler2D texSampler;
-
 void main() {
 	const vec3 sun = lights.lights[0].pos;
 	const vec3 sunColor = lights.lights[0].color;
-
-	if(false && texCoord[0] != 0){
-		color = texture(texSampler, texCoord);
-		return;
-	}
 
 	vec3 global = 0.1 * fragColor;
 

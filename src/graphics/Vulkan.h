@@ -253,12 +253,6 @@ private:
 	std::vector <VkImageView> swapChainImageViews;
 	std::vector <VkFramebuffer> swapChainFramebuffers;
 
-	VkImage textureImage;
-	VkDeviceMemory textureImageBuffer;
-	VkDeviceMemory textureImageMemory;
-	VkImageView textureImageView;
-	VkSampler textureSampler;
-
 	VkImage depthImage;
 	VkDeviceMemory depthImageMemory;
 	VkImageView depthImageView;
@@ -312,15 +306,10 @@ private:
 		void createTopoPipeline();
 		void createLinePipeline();
 		void createClothPipeline();
-		void createMassPipeline();
-		void createSpringPipeline();
 		VkShaderModule createShaderModule(const std::vector<char> &code); // from createGraphicsPipeline
 	void createFramebuffers();
 	void createCommandPool();
 	// Images
-	void createTextureImage();
-	void createTextureImageView();
-	void createTextureSampler();
 	void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
@@ -330,15 +319,11 @@ private:
 		bool hasStencilComponent(VkFormat format); // from createDepthResources
 		VkFormat findDepthFormat(); // from createDepthResources
 			VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features); // from findDepthFormat
-	void createVertexBuffer();
 		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties); // from createVertexBuffer
-	void createIndexBuffer();
 	void createUniformBuffers();
 	void createDescriptorPool();
 	void createDescriptorSets();
 		void createBufferDescriptorSet(VkDescriptorSetLayout layout, VkDescriptorSet *pos, UniformBuffer buffer, VkDeviceSize bufferSize);
-		void createStorageDescriptorSet(VkDescriptorSetLayout layout, VkDescriptorSet *pos, VkBuffer buffer, VkDeviceSize bufferSize);
-		void createImageDescriptorSet(VkDescriptorSetLayout layout, VkDescriptorSet *pos, VkImageView imageView, VkSampler imageSampler);
 	void createCommandBuffers();
 	void createSyncObjects();
 

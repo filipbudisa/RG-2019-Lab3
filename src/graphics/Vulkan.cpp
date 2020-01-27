@@ -68,9 +68,6 @@ void Vulkan::initVulkan(){
 
 	// Drawing
 	createCommandPool();
-	createTextureImage();
-	createTextureImageView();
-	createTextureSampler();
 	createDepthResources();
 	createFramebuffers();
 	//createVertexBuffer(); // not in recreate
@@ -126,20 +123,9 @@ void Vulkan::cleanup(){
 	// Start clearGarbage
 	cleanupSwapChain();
 
-	vkDestroySampler(device, textureSampler, nullptr);
-	vkDestroyImageView(device, textureImageView, nullptr);
-	vkDestroyImage(device, textureImage, nullptr);
-	vkFreeMemory(device, textureImageMemory, nullptr);
-
 
 	vkDestroyDescriptorSetLayout(device, descriptorSets[0].layout, nullptr);
 	vkDestroyDescriptorSetLayout(device, descriptorSets[1].layout, nullptr);
-
-	/*vkDestroyBuffer(device, indexBuffer, nullptr);
-	vkFreeMemory(device, indexBufferMemory, nullptr);
-
-	vkDestroyBuffer(device, vertexBuffer, nullptr);
-	vkFreeMemory(device, vertexBufferMemory, nullptr);*/
 
 	for(size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++){
 		vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
@@ -908,12 +894,10 @@ void Vulkan::createRenderPass(){
  * https://vulkan-tutorial.com/Uniform_buffers/Descriptor_layout_and_buffer
  */
 void Vulkan::createDescriptorSetLayouts(){
-	descriptorSets.resize(3);
+	descriptorSets.resize(2);
 
 	createDescriptorSetLayout(VK_SHADER_STAGE_VERTEX_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &descriptorSets[0].layout);
 	createDescriptorSetLayout(VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &descriptorSets[1].layout);
-
-	createDescriptorSetLayout(VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &descriptorSets[2].layout);
 }
 
 void Vulkan::createDescriptorSetLayout(VkShaderStageFlags stageFlags, VkDescriptorType descriptorType, uint32_t binding, VkDescriptorSetLayout *layout){
@@ -1182,7 +1166,7 @@ void Vulkan::createTopoPipeline(){
 
 	// Pipeline layout
 
-	std::vector<VkDescriptorSetLayout> descSetLayouts = { descriptorSets[0].layout, descriptorSets[1].layout, descriptorSets[2].layout };
+	std::vector<VkDescriptorSetLayout> descSetLayouts = { descriptorSets[0].layout, descriptorSets[1].layout };
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -1705,7 +1689,7 @@ void Vulkan::createClothPipeline(){
 
 	// Pipeline layout
 
-	std::vector<VkDescriptorSetLayout> descSetLayouts = { descriptorSets[0].layout, descriptorSets[1].layout, descriptorSets[2].layout };
+	std::vector<VkDescriptorSetLayout> descSetLayouts = { descriptorSets[0].layout, descriptorSets[1].layout };
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -1796,108 +1780,6 @@ void Vulkan::createClothPipeline(){
 	vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
 
-void Vulkan::createMassPipeline(){
-// Shader Stages
-	/**
-	 * Programmable
-	 *
-	 * Compiled shaders:
-	 * http://www.mattikariluoma.com/blog/Segmentation%20Fault%20during%20vkCreateGraphicsPipelines.html
-	 */
-
-	auto shaderCode = readFile("shaders/mass.comp.spv");
-
-	VkShaderModule shaderModule = createShaderModule(shaderCode);
-
-	VkPipelineShaderStageCreateInfo shaderStageInfo = {};
-	shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-	shaderStageInfo.module = shaderModule;
-	shaderStageInfo.pName = "main";
-
-	// Pipeline layout
-
-	std::vector<VkDescriptorSetLayout> descSetLayouts = { descriptorSets[3].layout, descriptorSets[4].layout };
-
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = descSetLayouts.size(); // Optional
-	pipelineLayoutInfo.pSetLayouts = descSetLayouts.data();
-
-	if(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayouts[3]) != VK_SUCCESS){
-		throw std::runtime_error("failed to create pipeline layout!");
-	}
-
-	// Pipeline info creation
-	/**
-	 * https://vulkan-tutorial.com/Drawing_a_triangle/Graphics_pipeline_basics/Conclusion
-	 */
-
-	VkComputePipelineCreateInfo pipelineInfo = {};
-	pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-	pipelineInfo.stage = shaderStageInfo;
-	pipelineInfo.layout = pipelineLayouts[3];
-
-
-	if(vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipelines[3]) !=
-	   VK_SUCCESS){
-		throw std::runtime_error("failed to create graphics pipeline!");
-	}
-
-	vkDestroyShaderModule(device, shaderModule, nullptr);
-}
-
-void Vulkan::createSpringPipeline(){
-// Shader Stages
-	/**
-	 * Programmable
-	 *
-	 * Compiled shaders:
-	 * http://www.mattikariluoma.com/blog/Segmentation%20Fault%20during%20vkCreateGraphicsPipelines.html
-	 */
-
-	auto shaderCode = readFile("shaders/spring.comp.spv");
-
-	VkShaderModule shaderModule = createShaderModule(shaderCode);
-
-	VkPipelineShaderStageCreateInfo shaderStageInfo = {};
-	shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-	shaderStageInfo.module = shaderModule;
-	shaderStageInfo.pName = "main";
-
-	// Pipeline layout
-
-	std::vector<VkDescriptorSetLayout> descSetLayouts = { descriptorSets[3].layout, descriptorSets[4].layout, descriptorSets[5].layout };
-
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = descSetLayouts.size(); // Optional
-	pipelineLayoutInfo.pSetLayouts = descSetLayouts.data();
-
-	if(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayouts[4]) != VK_SUCCESS){
-		throw std::runtime_error("failed to create pipeline layout!");
-	}
-
-	// Pipeline info creation
-	/**
-	 * https://vulkan-tutorial.com/Drawing_a_triangle/Graphics_pipeline_basics/Conclusion
-	 */
-
-	VkComputePipelineCreateInfo pipelineInfo = {};
-	pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-	pipelineInfo.stage = shaderStageInfo;
-	pipelineInfo.layout = pipelineLayouts[4];
-
-
-	if(vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipelines[4]) !=
-	   VK_SUCCESS){
-		throw std::runtime_error("failed to create graphics pipeline!");
-	}
-
-	vkDestroyShaderModule(device, shaderModule, nullptr);
-}
-
 VkShaderModule Vulkan::createShaderModule(const std::vector<char> &code){
 	VkShaderModuleCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -1962,115 +1844,6 @@ void Vulkan::createCommandPool(){
 
 	if(vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS){
 		throw std::runtime_error("failed to create command pool!");
-	}
-}
-
-/**
- * https://vulkan-tutorial.com/Texture_mapping/Images
- */
-void Vulkan::createTextureImage(){
-	int texWidth, texHeight, texChannels;
-	stbi_uc* pixels = stbi_load("textures/texture.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-	VkDeviceSize imageSize = texWidth * texHeight * 4;
-
-	if (!pixels) {
-		throw std::runtime_error("failed to load texture image!");
-	}
-
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-
-	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-	void* data;
-	vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-	memcpy(data, pixels, static_cast<size_t>(imageSize));
-	vkUnmapMemory(device, stagingBufferMemory);
-
-	stbi_image_free(pixels);
-
-
-	createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
-
-	transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-
-	transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-	vkDestroyBuffer(device, stagingBuffer, nullptr);
-	vkFreeMemory(device, stagingBufferMemory, nullptr);
-
-}
-
-/**
- * https://vulkan-tutorial.com/en/Texture_mapping/Image_view_and_sampler
- */
-void Vulkan::createTextureImageView(){
-	textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
-}
-
-void Vulkan::createTextureSampler(){
-	VkSamplerCreateInfo samplerInfo = {};
-	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	samplerInfo.magFilter = VK_FILTER_LINEAR;
-	samplerInfo.minFilter = VK_FILTER_LINEAR;
-
-	/**
-	 * The addressing mode can be specified per axis using the addressMode fields. The available values are listed
-	 * below. Most of these are demonstrated in the image above. Note that the axes are called U, V and W instead of X,
-	 * Y and Z. This is a convention for texture space coordinates.
-	 *  * VK_SAMPLER_ADDRESS_MODE_REPEAT: Repeat the texture when going beyond the image dimensions.
-	 *  * VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT: Like repeat, but inverts the coordinates to mirror the image when
-	 *    going beyond the dimensions.
-	 *  * VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE: Take the color of the edge closest to the coordinate beyond the imag
-	 *    dimensions.
-	 *  * VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE: Like clamp to edge, but instead uses the edge opposite to the
-	 *    closest edge.
-	 *  * VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER: Return a solid color when sampling beyond the dimensions of the
-	 *    image.
-	 */
-
-	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-
-	/**
-	 * Anisotropic filtering
-	 */
-	samplerInfo.anisotropyEnable = VK_TRUE;
-	samplerInfo.maxAnisotropy = 16;
-
-	/**
-	 * Which color is returned when sampling beyond the image with clamp to border addressing mode. It is possible to
-	 * return black, white or transparent in either float or int formats. You cannot specify an arbitrary color.
-	 */
-	samplerInfo.borderColor = VK_BORDER_COLOR_INT_TRANSPARENT_BLACK;
-
-	/**
-	 * Which coordinate system you want to use to address texels in an image. If this field is VK_TRUE, then you can
-	 * simply use coordinates within the [0, texWidth) and [0, texHeight) range. If it is VK_FALSE, then the texels are
-	 * addressed using the [0, 1) range on all axes. Real-world applications almost always use normalized coordinates,
-	 * because then it's possible to use textures of varying resolutions with the exact same coordinates.
-	 */
-	samplerInfo.unnormalizedCoordinates = VK_FALSE;
-
-	/**
-	 * If a comparison function is enabled, then texels will first be compared to a value, and the result of that
-	 * comparison is used in filtering operations. This is mainly used for percentage-closer filtering on shadow maps.
-	 */
-	samplerInfo.compareEnable = VK_FALSE;
-	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-
-	/**
-	 * Mipmapping
-	 */
-	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	samplerInfo.mipLodBias = 0.0f;
-	samplerInfo.minLod = 0.0f;
-	samplerInfo.maxLod = 0.0f;
-
-	if (vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create texture sampler!");
 	}
 }
 
@@ -2559,7 +2332,7 @@ void Vulkan::createDescriptorPool(){
 void Vulkan::createDescriptorSets(){
 	createBufferDescriptorSet(descriptorSets[0].layout, descriptorSets[0].set, uniformBuffers[0], sizeof(UBOViewProj));
 	createBufferDescriptorSet(descriptorSets[1].layout, descriptorSets[1].set, uniformBuffers[1], sizeof(UBOLights));
-	createImageDescriptorSet(descriptorSets[2].layout, descriptorSets[2].set, textureImageView, textureSampler);
+	//createImageDescriptorSet(descriptorSets[2].layout, descriptorSets[2].set, textureImageView, textureSampler);
 }
 
 void Vulkan::createBufferDescriptorSet(VkDescriptorSetLayout layout, VkDescriptorSet *pos, UniformBuffer buffer, VkDeviceSize bufferSize){
@@ -2590,67 +2363,6 @@ void Vulkan::createBufferDescriptorSet(VkDescriptorSetLayout layout, VkDescripto
 		descriptorWrite.pBufferInfo = &bufferInfo;
 		descriptorWrite.pImageInfo = nullptr; // Optional
 		descriptorWrite.pTexelBufferView = nullptr; // Optional
-
-		vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
-	}
-}
-
-void Vulkan::createStorageDescriptorSet(VkDescriptorSetLayout layout, VkDescriptorSet *pos, VkBuffer buffer, VkDeviceSize bufferSize){
-	VkDescriptorSetAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = &layout;
-
-	if (vkAllocateDescriptorSets(device, &allocInfo, pos) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate descriptor sets!");
-	}
-
-	VkDescriptorBufferInfo bufferInfo = {};
-	bufferInfo.buffer = buffer;
-	bufferInfo.offset = 0;
-	bufferInfo.range = bufferSize;
-
-	VkWriteDescriptorSet descriptorWrite = {};
-	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = *pos;
-	descriptorWrite.dstBinding = 0;
-	descriptorWrite.dstArrayElement = 0;
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	descriptorWrite.descriptorCount = 1;
-	descriptorWrite.pBufferInfo = &bufferInfo;
-	descriptorWrite.pImageInfo = nullptr; // Optional
-	descriptorWrite.pTexelBufferView = nullptr; // Optional
-
-	vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
-}
-
-void Vulkan::createImageDescriptorSet(VkDescriptorSetLayout layout, VkDescriptorSet *pos, VkImageView imageView, VkSampler imageSampler){
-	std::vector<VkDescriptorSetLayout> layouts(swapChainImages.size(), layout);
-	VkDescriptorSetAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;
-	allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainImages.size());
-	allocInfo.pSetLayouts = layouts.data();
-
-	if (vkAllocateDescriptorSets(device, &allocInfo, pos) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate descriptor sets!");
-	}
-
-	for (size_t i = 0; i < swapChainImages.size(); i++) {
-		VkDescriptorImageInfo imageInfo = {};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = imageView;
-		imageInfo.sampler = imageSampler;
-
-		VkWriteDescriptorSet descriptorWrite = {};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = pos[i];
-		descriptorWrite.dstBinding = 0;
-		descriptorWrite.dstArrayElement = 0;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.pImageInfo = &imageInfo;
 
 		vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
 	}
@@ -2765,9 +2477,8 @@ void Vulkan::recordCommandBuffer(size_t i){
 
 	// Bind descriptorsstd::vector<VkDescriptorSet> cmdDescriptorSets = { descriptorSets[0].set[i], descriptorSets[1].set[i] };
 	std::vector<VkDescriptorSet> cmdDescriptorSets = { descriptorSets[0].set[i], descriptorSets[1].set[i] };
-	vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayouts[1], 0, cmdDescriptorSets.size(), cmdDescriptorSets.data(), 0, nullptr);
-	cmdDescriptorSets.push_back(descriptorSets[2].set[i]);
 	vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayouts[0], 0, cmdDescriptorSets.size(), cmdDescriptorSets.data(), 0, nullptr);
+	vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayouts[1], 0, cmdDescriptorSets.size(), cmdDescriptorSets.data(), 0, nullptr);
 	vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayouts[2], 0, cmdDescriptorSets.size(), cmdDescriptorSets.data(), 0, nullptr);
 
 	// Draw command
