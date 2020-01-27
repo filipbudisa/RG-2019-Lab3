@@ -32,12 +32,12 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
 struct glMassPoint {
 	alignas(16) glm::vec3 force;
 	alignas(16) glm::vec3 velocity;
-	alignas(4) bool fixed = false;
+	bool fixed = false;
 };
 
 struct glSpring {
-	alignas(4) uint16_t first;
-	alignas(4) uint16_t second;
+	uint32_t first;
+	uint32_t second;
 	float k;
 	float length;
 };
@@ -47,7 +47,7 @@ struct Vertex {
 	alignas(16) glm::vec3 pos;
 	alignas(16) glm::vec3 color;
 	alignas(16) glm::vec3 normal;
-	glm::vec2 texCoord;
+	alignas(8) glm::vec2 texCoord;
 
 	/**
 	 * A vertex binding describes at which rate to load data from memory throughout the vertices. It specifies the
@@ -159,7 +159,7 @@ const std::vector<const char *> deviceExtensions = {
 };
 
 #ifdef NDEBUG
-const bool enableValidationLayers = false;
+const bool enableValidationLayers = true;
 #else
 const bool enableValidationLayers = true;
 #endif
@@ -215,10 +215,7 @@ public:
 	bool *running;
 
 	void init();
-	void prepareCompute();
 	void drawFrame();
-	void doComputeMass();
-	void doComputeSprings();
 	void cleanup();
 
 	GLFWwindow *window;
@@ -232,8 +229,6 @@ public:
 		void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 
 	void recordCommandBuffer(size_t i);
-	void recordComputeMassCommandBuffer();
-	void recordComputeSpringCommandBuffer();
 
 private:
 
@@ -312,7 +307,7 @@ private:
 	void createImageViews();
 	void createRenderPass();
 	void createDescriptorSetLayouts();
-		void createDescriptorSetLayout(VkShaderStageFlags stageFlags, VkDescriptorType descriptorType, uint32_t binding_start, uint32_t binding_count, VkDescriptorSetLayout *layout);
+		void createDescriptorSetLayout(VkShaderStageFlags stageFlags, VkDescriptorType descriptorType, uint32_t binding, VkDescriptorSetLayout *layout);
 	void createGraphicsPipeline();
 		void createTopoPipeline();
 		void createLinePipeline();

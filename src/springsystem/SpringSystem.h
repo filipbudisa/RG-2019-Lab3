@@ -27,12 +27,6 @@ public:
 
 	void cleanup();
 
-	BufferAllocation *pointBuffer = nullptr;
-	BufferAllocation *springBuffer = nullptr;
-
-	std::vector<glMassPoint> glPoints;
-	std::vector<glSpring> glSprings;
-
 	WorldObject* object;
 private:
 	unsigned n;

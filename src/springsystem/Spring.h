@@ -34,7 +34,6 @@ private:
 	SpringSystem* system;
 	std::pair<uint16_t, uint16_t> pointsIndexes;
 	std::pair<MassPoint*, MassPoint*> points;
-	std::pair<glMassPoint*, glMassPoint*> glPoints;
 };
 
 

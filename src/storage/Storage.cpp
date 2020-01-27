@@ -3,8 +3,6 @@
 
 std::vector<RenderComponent*> Storage::renderObjects;
 std::vector<WorldObject*> Storage::worldObjects;
-std::vector<Bspline*> Storage::splines;
-std::vector<Particle*> Storage::particles;
 std::vector<Spring*> Storage::springs;
 std::vector<SpringSystem*> Storage::sSystems;
 std::array<std::vector<RenderComponent*>, 2> Storage::renderObjectGarbage;
@@ -32,17 +30,6 @@ void Storage::removeWorldObject(WorldObject *wObj){
 	delete wObj;
 }
 
-void Storage::addParticle(Particle *p){
-	graphics->regObject(p->getWObject()->renderComponent);
-	particles.push_back(p);
-}
-
-void Storage::removeParticle(Particle *p){
-	renderObjectGarbage[frame].push_back(p->getWObject()->renderComponent);
-	particles.erase(std::remove(particles.begin(), particles.end(), p), particles.end());
-	Storage::removeWorldObject(p->getWObject());
-	delete p;
-}
 
 void Storage::clearGarbage(){
 	frame = (frame+1) % 2;
@@ -61,37 +48,22 @@ void Storage::cleanup(){
 		delete rObj;
 	}
 
+	for(int i = 0; i < Storage::springs.size(); i++){
+		graphics->deregSpring(Storage::springs[i]);
+	}
+
+	for(RenderComponent* rObj : renderObjects){
+		graphics->deregObject(rObj);
+		delete rObj;
+	}
+
 	for(WorldObject* wObj : worldObjects){
 		wObj->cleanup();
 		delete wObj;
 	}
 
-	for(SpringSystem* system : sSystems){
-		graphics->deregMass(system);
-		system->cleanup();
-		delete system;
-	}
-
-	/*for(Bspline* s : splines){
-		graphics->deregSpline(s);
-	}
-
-	for(Particle* p : particles){
-		graphics->deregObject(p->getWObject()->renderComponent);
-	}
-
-	for(Spring* s : springs){
-		graphics->deregSpring(s);
-	}*/
-
 	renderObjects.clear();
 	worldObjects.clear();
-	/*splines.clear();
-	particles.clear();*/
 	springs.clear();
 	sSystems.clear();
-}
-
-void Storage::dereg(){
-
 }

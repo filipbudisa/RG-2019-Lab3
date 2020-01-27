@@ -13,12 +13,10 @@ SpringSystem::SpringSystem(WorldObject *object, unsigned n, float mass) : object
 
 void SpringSystem::constructPoints(float mass){
 	points.resize(pow(n, 2));
-	glPoints.resize(pow(n, 2));
 	mesh.resize(n);
 
 	for(int i = 0; i < points.size(); i++){
 		points[i] = new MassPoint(&(object->renderComponent->mesh.vertices[i]), &object->renderComponent->transforms, mass);
-		glPoints[i] = { { 0, 0, 0 }, { 0, 0, 0 } };
 
 		int j = i / n;
 		mesh[j].push_back(points[i]);
@@ -26,9 +24,9 @@ void SpringSystem::constructPoints(float mass){
 }
 
 void SpringSystem::constructSprings(){
-	int k1 = 50000;
-	int k2 = 500000;
-	int k3 = 500;
+	float k1 = 500000;
+	float k2 = 500000;
+	float k3 = 500;
 
 	for(int i = 0; i < mesh.size(); i++){
 		for(int j = 0; j < mesh[i].size(); j++){
@@ -44,7 +42,7 @@ void SpringSystem::constructSprings(){
 				addSpring(b);
 			}
 
-			/*if(j > 0 && i > 0){
+			if(j > 0 && i > 0){
 				Spring* b = new Spring((i-1) * mesh.size() + j, i * mesh.size() + j - 1, k2);
 				addSpring(b);
 			}
@@ -65,7 +63,7 @@ void SpringSystem::constructSprings(){
 				//Spring* b = new Spring(points[i][j], points[i][j-1], k1);
 				Spring* b = new Spring(i * mesh.size() + j, i * mesh.size() + j - 2, k3);
 				addSpring(b);
-			}*/
+			}
 		}
 	}
 }
@@ -73,13 +71,9 @@ void SpringSystem::constructSprings(){
 void SpringSystem::resetForce(){
 	for(int i = 0; i < points.size(); i++){
 		points[i]->resetForce();
-		glPoints[i].force = { 0, 0, 0 };
 	}
 }
-
 void SpringSystem::collide(CollisionComponent *collidor){
-	return;
-
 	for(MassPoint* point : points){
 		glm::vec3 pos =  point->getPosition() * object->scale + object->position;
 		glm::vec3 diff = collidor->collide(pos);
@@ -94,10 +88,8 @@ void SpringSystem::update(double time){
 		spring->update(time);
 	}
 
-	return;
-
-	for(MassPoint* point : points){
-		point->update(time);
+	for(int i = 0; i < points.size(); i++){
+		points[i]->update(time);
 	}
 
 	if(drawMesh){
@@ -105,29 +97,6 @@ void SpringSystem::update(double time){
 			spring->updateVertices();
 		}
 	}
-
-	/*int v = 0;
-	for(int i = 1; i < mesh.size(); i++){
-		for(int j = 0; j < mesh.size()-1; j++){
-			glm::vec3 a = mesh[i][j]->getPosition();
-			glm::vec3 b = mesh[i-1][j]->getPosition();
-			glm::vec3 c = mesh[i][j+1]->getPosition();
-			glm::vec3 normal = glm::cross(b - a, c - a);
-			normal = glm::normalize(normal);
-			vertices[v++] = { a, { 1.0, 1.0, 1.0 }, normal };
-			vertices[v++] = { b, { 1.0, 1.0, 1.0 }, normal };
-			vertices[v++] = { c, { 1.0, 1.0, 1.0 }, normal };
-
-			a = mesh[i-1][j]->getPosition();
-			b = mesh[i-1][j+1]->getPosition();
-			c = mesh[i][j+1]->getPosition();
-			normal = glm::cross(b - c, b - a);
-			normal = glm::normalize(normal);
-			vertices[v++] = { a, { 1.0, 1.0, 1.0 }, normal };
-			vertices[v++] = { b, { 1.0, 1.0, 1.0 }, normal };
-			vertices[v++] = { c, { 1.0, 1.0, 1.0 }, normal };
-		}
-	}*/
 }
 
 void SpringSystem::addSpring(Spring* spring){
@@ -136,7 +105,6 @@ void SpringSystem::addSpring(Spring* spring){
 	spring->setSystem(this);
 
 	std::pair<uint16_t, uint16_t> indexes = spring->getIndexes();
-	glSprings.push_back({ indexes.first, indexes.second, spring->k, spring->length });
 }
 
 void SpringSystem::addPoint(MassPoint* point){
@@ -161,7 +129,6 @@ int SpringSystem::getNoPoints(){
 
 void SpringSystem::setFixed(int i, int j, bool fixed){
 	points[i * n + j]->setFixed(fixed);
-	glPoints[i * n + j].fixed = fixed;
 }
 
 void SpringSystem::cleanup(){

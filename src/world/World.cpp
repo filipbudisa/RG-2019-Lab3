@@ -1,35 +1,12 @@
 #include "World.h"
-#include "../graphics/RenderComponent.h"
 #include "../storage/Storage.h"
 #include "../utils.h"
-#include "../curves/Bspline.h"
-#include "../particlesystem/ParticleSystem.h"
-#include "../springsystem/MassPoint.h"
-#include "../springsystem/SpringSystem.h"
 #include "../Game.h"
 #include "../curves/CosLine.h"
 #include "../physics/CollisionSphere.h"
+#include "../data.h"
 
-glm::vec3 rot;
-glm::vec3 pos;
-
-WorldObject* teddy;
-
-void World::load(int i){
-	/*RenderComponent *rObj = new RenderComponent(Mesh({
-			{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-			{{0.5f,  -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-			{{0.5f,  0.5f, 0.0f},  {0.0f, 0.0f, 1.0f}},
-			{{-0.5f, 0.5f, 0.0f},  {1.0f, 1.0f, 1.0f}}
-		},
-		{ 0, 1, 2, 2, 3, 0 }));
-
-	Storage::renderObjects.push_back(rObj);
-
-	Storage::worldObjects.push_back(new WorldObject(rObj, { 3.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }));
-	Storage::worldObjects.push_back(new WorldObject(rObj, { -3.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }));
-	Storage::worldObjects.push_back(new WorldObject(rObj, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }));*/
-
+void World::load(int scene){
 	Mesh GroundPlane = Mesh({
 			   {{-5.0f, -5.0f, 0.0f}, {0.5f, 0.5f, 0.5f}, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f }},
 			   {{5.0f,  -5.0f, 0.0f}, {0.5f, 0.5f, 0.5f}, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f }},
@@ -40,43 +17,7 @@ void World::load(int i){
 	WorldObject* gpObject = new WorldObject();
 	gpObject->setRender(new RenderComponent(GroundPlane));
 
-	// loadModel(readObj("pillar.obj"), glm::vec3(3.0f, 3.0f, 0.0f), glm::vec3(glm::half_pi<float>(), 0.0f, 0.0f), glm::vec3(0.5f, 0.5f, 0.5f));
-	// loadModel(readObj("pillar.obj"), glm::vec3(3.0f, -3.0f, 0.0f), glm::vec3(glm::half_pi<float>(), 0.0f, 0.0f), glm::vec3(0.5f, 0.5f, 0.5f));
-	// loadModel(readObj("pillar.obj"), glm::vec3(-3.0f, -3.0f, 0.0f), glm::vec3(glm::half_pi<float>(), 0.0f, 0.0f), glm::vec3(0.5f, 0.5f, 0.5f));
-	// loadModel(readObj("pillar.obj"), glm::vec3(-3.0f, 3.0f, 0.0f), glm::vec3(glm::half_pi<float>(), 0.0f, 0.0f), glm::vec3(0.5f, 0.5f, 0.5f));
-
-	//loadModel(readObj("monkey.obj"), { 0, -1.5f, 0.0f }, { glm::half_pi<float>(), 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f });
-	//loadModel(readObj("teddy.obj"), { 0.0f, 1.5f, 1.0f }, { glm::half_pi<float>(), 0.0f, 0.0f }, { 0.05f, 0.05f, 0.05f });
-
-	/*teddy = loadModel(readObj("teddy.obj"), { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.03f, 0.03f, 0.03f });
-	Bspline* spline = new Bspline(teddy, "spline.txt", 10);
-	teddy->addModifier(spline);
-	Storage::splines.push_back(spline);*/
-
-	//Bspline* spline = new Bspline( "spline.txt", 10);
-	//Storage::splines.push_back(spline);
-
-	/*pSystems.push_back(ParticleSystem(
-			{ -2, -2, 1 },
-			{ 0, 0, 1 },
-			0.8,
-			0.02,
-			{ 0, 0, -.0098 },
-			100,
-			4));
-
-	pSystems.push_back(ParticleSystem(
-			{ 0, 0, 0 },
-			{ 0, 0, 1 },
-			1,
-			0.005,
-			{ 0, 0, -.0098 },
-			20,
-			2)); */
-
-	scene = i;
-
-	switch(i){
+	switch(scene){
 		case 1:
 			load1();
 			break;
@@ -86,76 +27,19 @@ void World::load(int i){
 		case 3:
 			load3();
 			break;
-		case 4:
-			load4();
-			break;
-		case 5:
-			load5();
-			break;
-		case 6:
-			load6();
-			break;
 	}
 
 	updateTransformationmatrices();
 }
 
 void World::load1(){
-	Mesh plane = Mesh::generatePlane({ 0, 0 }, { 2, 2 }, 20, true);
-	WorldObject* planeObj = new WorldObject();
-	planeObj->position = { 0, 0, 3 };
-	planeObj->setRender(new RenderComponent(plane));
-
-	SpringSystem* system = new SpringSystem(planeObj, 20, 20);
-	system->setFixed(19, 0, true);
-	planeObj->setPhysics(system);
-
-	Mesh mesh = Mesh::generateSphere(0.49, 20, 20);
-	WorldObject* ballObj = new WorldObject({ 1.0, 1.0, 2.0 }, { 0.0, 0.0, 0.0, 0.0 }, { 1.0, 1.0, 1.0 });
-	ballObj->setRender(new RenderComponent(mesh));
-	ballObj->setCollision(new CollisionComponent(ballObj, new CollisionSphere(0.5)));
-}
-
-void World::load2(){
-	Mesh plane = Mesh::generatePlane({ 1, 3 }, { -1, 1 }, 20);
+	Mesh plane = Mesh::generatePlane({ 1, 3 }, { -1, 1 }, noPoints);
 	WorldObject* planeObj = new WorldObject();
 	planeObj->setRender(new RenderComponent(plane));
 
-	SpringSystem* system = new SpringSystem(planeObj, 20, 20);
+	SpringSystem* system = new SpringSystem(planeObj, noPoints, 20);
 	system->setFixed(0, 0, true);
-	system->setFixed(19, 0, true);
-	planeObj->setPhysics(system);
-
-	Mesh mesh = Mesh::generateSphere(0.49, 20, 20);
-	WorldObject* ballObj = new WorldObject({ 0.0, 1.0, 2.0 }, { 0.0, 0.0, 0.0, 0.0 }, { 1.0, 1.0, 1.0 });	ballObj->setRender(new RenderComponent(mesh));
-	ballObj->setCollision(new CollisionComponent(ballObj, new CollisionSphere(0.5)));
-	ballObj->addModifier(new CosLine(ballObj, { 0, 1, 0 }, 1, 5));
-}
-
-void World::load3(){
-	Mesh plane = Mesh::generatePlane({ 1, 3 }, { -1, 1 }, 20);
-	WorldObject* planeObj = new WorldObject();
-	planeObj->setRender(new RenderComponent(plane));
-
-	SpringSystem* system = new SpringSystem(planeObj, 20, 20);
-	system->setFixed(0, 0, true);
-	system->setFixed(19, 0, true);
-	planeObj->setPhysics(system);
-
-	Mesh mesh = Mesh::generateSphere(0.49, 20, 20);
-	WorldObject* ballObj = new WorldObject({ 0.0, 0.6, 2.0 }, { 0.0, 0.0, 0.0, 0.0 }, { 1.0, 1.0, 1.0 });	ballObj->setRender(new RenderComponent(mesh));
-	ballObj->setCollision(new CollisionComponent(ballObj, new CollisionSphere(0.5)));
-	ballObj->addModifier(new CosLine(ballObj, { 0, 1, 0 }, 2, 5));
-}
-
-void World::load4(){
-	Mesh plane = Mesh::generatePlane({ 1, 3 }, { -1, 1 }, 20);
-	WorldObject* planeObj = new WorldObject();
-	planeObj->setRender(new RenderComponent(plane));
-
-	SpringSystem* system = new SpringSystem(planeObj, 20, 20);
-	system->setFixed(0, 0, true);
-	system->setFixed(19, 0, true);
+	system->setFixed(noPoints-1, 0, true);
 	planeObj->setPhysics(system);
 
 	Mesh mesh = Mesh::generateSphere(0.29, 20, 20);
@@ -169,13 +53,29 @@ void World::load4(){
 	ballObj->addModifier(new CosLine(ballObj, { 0, 1, 0 }, 1, 8));
 }
 
-void World::load5(){
-	Mesh plane = Mesh::generatePlane({ 2, 2 }, { -2, -2 }, 15, true);
+void World::load2(){
+	Mesh plane = Mesh::generatePlane({ 1, 3 }, { -1, 1 }, noPoints);
 	WorldObject* planeObj = new WorldObject();
 	planeObj->setRender(new RenderComponent(plane));
-	planeObj->position = { 0, 0, 3 };
 
-	SpringSystem* system = new SpringSystem(planeObj, 15, 20);
+	SpringSystem* system = new SpringSystem(planeObj, noPoints, 20);
+	system->setFixed(0, 0, true);
+	system->setFixed(noPoints-1, 0, true);
+	planeObj->setPhysics(system);
+
+	Mesh mesh = Mesh::generateSphere(0.49, 20, 20);
+	WorldObject* ballObj = new WorldObject({ 0.0, 0.7, 2.0 }, { 0.0, 0.0, 0.0, 0.0 }, { 1.0, 1.0, 1.0 });	ballObj->setRender(new RenderComponent(mesh));
+	ballObj->setCollision(new CollisionComponent(ballObj, new CollisionSphere(0.5)));
+	ballObj->addModifier(new CosLine(ballObj, { 0, 1, 0 }, 1, 5));
+}
+
+void World::load3(){
+	Mesh plane = Mesh::generatePlane({ -2, -2 }, { 2, 2 }, noPoints, true);
+	WorldObject* planeObj = new WorldObject();
+	planeObj->setRender(new RenderComponent(plane));
+	planeObj->position = { 0, 0, 3.0 };
+
+	SpringSystem* system = new SpringSystem(planeObj, noPoints, 20);
 	planeObj->setPhysics(system);
 
 	Mesh mesh = Mesh::generateSphere(0.29, 20, 20);
@@ -193,27 +93,6 @@ void World::load5(){
 	mesh = Mesh::generateSphere(0.29, 20, 20);
 	ballObj = new WorldObject({ -1, -1, 2.0 }, { 0.0, 0.0, 0.0, 0.0 }, { 1.0, 1.0, 1.0 });	ballObj->setRender(new RenderComponent(mesh));
 	ballObj->setCollision(new CollisionComponent(ballObj, new CollisionSphere(0.3)));
-}
-
-void World::load6(){
-	Mesh plane = Mesh::generatePlane({ 1, 3 }, { -1, 1 }, 10);
-	WorldObject* planeObj = new WorldObject();
-	planeObj->setRender(new RenderComponent(plane));
-
-	SpringSystem* system = new SpringSystem(planeObj, 10, 20);
-	system->setFixed(0, 0, true);
-	system->setFixed(9, 0, true);
-	planeObj->setPhysics(system);
-
-	Mesh mesh = Mesh::generateSphere(0.29, 20, 20);
-	WorldObject* ballObj = new WorldObject({ 0.5, -0.6, 2.0 }, { 0.0, 0.0, 0.0, 0.0 }, { 1.0, 1.0, 1.0 });	ballObj->setRender(new RenderComponent(mesh));
-	ballObj->setCollision(new CollisionComponent(ballObj, new CollisionSphere(0.3)));
-	ballObj->addModifier(new CosLine(ballObj, { 0, -1, 0 }, 1, 8));
-
-	mesh = Mesh::generateSphere(0.29, 20, 20);
-	ballObj = new WorldObject({ -0.5, 0.6, 2.0 }, { 0.0, 0.0, 0.0, 0.0 }, { 1.0, 1.0, 1.0 });	ballObj->setRender(new RenderComponent(mesh));
-	ballObj->setCollision(new CollisionComponent(ballObj, new CollisionSphere(0.3)));
-	ballObj->addModifier(new CosLine(ballObj, { 0, 1, 0 }, 1, 8));
 }
 
 void World::cleanup(){
@@ -241,20 +120,6 @@ float i = 0;
 bool added = false;
 
 void World::update(double time){
-	for(WorldObject *obj : Storage::worldObjects){
-		//obj->update(time);
-	}
-
-	/*for(Bspline *s : Storage::splines){
-		s->update(time);
-	}
-
-	pSystems[1].setSource(Storage::splines[0]->tVert * glm::vec4({ 0.0, 0.0, 1.0, 1.0 }));
-
-	for(ParticleSystem& p : pSystems){
-		p.update(time);
-	}*/
-
 	updateTransformationmatrices();
 }
 

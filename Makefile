@@ -14,6 +14,9 @@ CFLAGS = -std=c++17 -I$(VULKAN_SDK_PATH)/include
 LDFLAGS = -L$(VULKAN_SDK_PATH)/lib `pkg-config --static --libs glfw3` -lvulkan -lpthread
 #LDFLAGS = -L$(VULKAN_SDK_PATH)/lib -lvulkan -lGL -lGLU -lglfw -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor
 
+SCENE ?= 1
+POINTS ?= 10
+
 .PHONY: all clean
 
 all: $(name) shaders
@@ -28,11 +31,11 @@ shaders/%.spv: shaders/%.glsl
 	$(VULKAN_SDK_PATH)/bin/glslangValidator -V $< -o $@
 
 test: all
-	#LD_LIBRARY_PATH=$(VULKAN_SDK_PATH)/lib VK_LAYER_PATH=$(VULKAN_SDK_PATH)/etc/vulkan/explicit_layer.d ./VulkanTest ${SCENE}
-	./VulkanTest ${SCENE}
+	LD_LIBRARY_PATH=$(VULKAN_SDK_PATH)/lib VK_LAYER_PATH=$(VULKAN_SDK_PATH)/etc/vulkan/explicit_layer.d ./$(name) $(SCENE) $(POINTS)
+	#./$(name) ${SCENE}
 
 debug: all
-	LD_LIBRARY_PATH=$(VULKAN_SDK_PATH)/lib VK_LAYER_PATH=$(VULKAN_SDK_PATH)/etc/vulkan/explicit_layer.d gdb VulkanTest
+	LD_LIBRARY_PATH=$(VULKAN_SDK_PATH)/lib VK_LAYER_PATH=$(VULKAN_SDK_PATH)/etc/vulkan/explicit_layer.d gdb ./$(name) $(SCENE) $(POINTS)
 
 shaders: $(shaderObjects)
 

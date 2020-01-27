@@ -322,65 +322,6 @@ void Vulkan::drawFrame(){
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void Vulkan::prepareCompute(){
-	createStorageDescriptorSet(descriptorSets[3].layout, descriptorSets[3].set,
-			Storage::sSystems[0]->pointBuffer->buffer, sizeof(glMassPoint) * Storage::sSystems[0]->glPoints.size() );
-	createStorageDescriptorSet(descriptorSets[4].layout, descriptorSets[4].set,
-			Storage::sSystems[0]->object->renderComponent->vertexBuffer->buffer, sizeof(Vertex) * Storage::sSystems[0]->object->renderComponent->mesh.vertices.size());
-	createStorageDescriptorSet(descriptorSets[5].layout, descriptorSets[5].set,
-							   Storage::sSystems[0]->springBuffer->buffer, sizeof(glSpring) * Storage::sSystems[0]->glSprings.size());
-
-	pipelineLayouts.resize(5);
-	graphicsPipelines.resize(5);
-
-	createMassPipeline();
-	createSpringPipeline();
-}
-
-void Vulkan::doComputeMass(){
-
-	// Record the command buffer
-	recordComputeMassCommandBuffer();
-
-	// Submit the command buffer
-	VkSubmitInfo submitInfo = {};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-	// Which command buffers to actually submit for execution
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &computeCommandBuffer;
-
-	try{
-		if(vkQueueSubmit(graphicsQueue, 1, &submitInfo, nullptr) != VK_SUCCESS){
-			throw std::runtime_error("failed to submit compute command buffer!");
-		}
-	}catch(const std::exception& e){
-		printf("foo\n");
-	}
-}
-
-void Vulkan::doComputeSprings(){
-
-	// Record the command buffer
-	recordComputeSpringCommandBuffer();
-
-	// Submit the command buffer
-	VkSubmitInfo submitInfo = {};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-	// Which command buffers to actually submit for execution
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &computeCommandBuffer;
-
-	try{
-		if(vkQueueSubmit(graphicsQueue, 1, &submitInfo, nullptr) != VK_SUCCESS){
-			throw std::runtime_error("failed to submit compute command buffer!");
-		}
-	}catch(const std::exception& e){
-		printf("foo\n");
-	}
-}
-
 void Vulkan::updateUniformBuffer(uint32_t currentImage){
 	static auto startTime = std::chrono::high_resolution_clock::now();
 	auto currentTime = std::chrono::high_resolution_clock::now();
@@ -422,7 +363,7 @@ void Vulkan::createInstance(){
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = "No Engine";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.apiVersion = VK_API_VERSION_1_0;
+	appInfo.apiVersion = VK_API_VERSION_1_1;
 
 	VkInstanceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -967,35 +908,26 @@ void Vulkan::createRenderPass(){
  * https://vulkan-tutorial.com/Uniform_buffers/Descriptor_layout_and_buffer
  */
 void Vulkan::createDescriptorSetLayouts(){
-	descriptorSets.resize(6);
+	descriptorSets.resize(3);
 
-	createDescriptorSetLayout(VK_SHADER_STAGE_VERTEX_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, 1, &descriptorSets[0].layout);
-	createDescriptorSetLayout(VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, 1, &descriptorSets[1].layout);
+	createDescriptorSetLayout(VK_SHADER_STAGE_VERTEX_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &descriptorSets[0].layout);
+	createDescriptorSetLayout(VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &descriptorSets[1].layout);
 
-	createDescriptorSetLayout(VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, 1, &descriptorSets[2].layout);
-
-	createDescriptorSetLayout(VK_SHADER_STAGE_COMPUTE_BIT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0, 1, &descriptorSets[3].layout);
-	createDescriptorSetLayout(VK_SHADER_STAGE_COMPUTE_BIT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0, 1, &descriptorSets[4].layout);
-	createDescriptorSetLayout(VK_SHADER_STAGE_COMPUTE_BIT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0, 1, &descriptorSets[5].layout);
+	createDescriptorSetLayout(VK_SHADER_STAGE_FRAGMENT_BIT, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &descriptorSets[2].layout);
 }
 
-void Vulkan::createDescriptorSetLayout(VkShaderStageFlags stageFlags, VkDescriptorType descriptorType, uint32_t binding_start, uint32_t binding_count, VkDescriptorSetLayout *layout){
-	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-	uboLayoutBinding.binding = binding_start;
-	uboLayoutBinding.descriptorType = descriptorType;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.stageFlags = stageFlags;
-	uboLayoutBinding.pImmutableSamplers = nullptr; // Optional, only relevant for image sampling related descriptors
-
-	std::vector<VkDescriptorSetLayoutBinding> bindings(binding_count, uboLayoutBinding);
-	for(int i = 0; i <= bindings.size(); i++){
-		bindings[i].binding += i;
-	}
+void Vulkan::createDescriptorSetLayout(VkShaderStageFlags stageFlags, VkDescriptorType descriptorType, uint32_t binding, VkDescriptorSetLayout *layout){
+	VkDescriptorSetLayoutBinding layoutBinding = {};
+	layoutBinding.binding = binding;
+	layoutBinding.descriptorType = descriptorType;
+	layoutBinding.descriptorCount = 1;
+	layoutBinding.stageFlags = stageFlags;
+	layoutBinding.pImmutableSamplers = nullptr; // Optional, only relevant for image sampling related descriptors
 
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = bindings.size();
-	layoutInfo.pBindings = bindings.data();
+	layoutInfo.bindingCount = 1;
+	layoutInfo.pBindings = &layoutBinding;
 
 	if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, layout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor set layout!");
@@ -2606,20 +2538,18 @@ void Vulkan::createUniformBuffers(){
  * https://vulkan-tutorial.com/Uniform_buffers/Descriptor_pool_and_sets
  */
 void Vulkan::createDescriptorPool(){
-	std::array<VkDescriptorPoolSize, 3> poolSizes = {};
+	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSizes[0].descriptorCount = static_cast<uint32_t>(2 * swapChainImages.size()); // TODO: descriptor count
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	poolSizes[1].descriptorCount = static_cast<uint32_t>(2 * swapChainImages.size());
-	poolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	poolSizes[2].descriptorCount = static_cast<uint32_t>(2 * swapChainImages.size());
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());;
 	poolInfo.pPoolSizes = poolSizes.data();
 
-	poolInfo.maxSets = static_cast<uint32_t>(5 * swapChainImages.size());
+	poolInfo.maxSets = static_cast<uint32_t>(4 * swapChainImages.size());
 
 	if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor pool!");
@@ -2882,24 +2812,6 @@ void Vulkan::recordCommandBuffer(size_t i){
 	}
 
 	vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[1]);
-	//vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, cmdDescriptorSets.size(), cmdDescriptorSets.data(), 0, nullptr);
-
-	//vkCmdSetLineWidth(commandBuffers[i+2], 2);
-	for(Bspline *spline : Storage::splines){
-		VkBuffer vertexBuffers[] = { spline->vertexBuffer->buffer };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-		vkCmdPushConstants(commandBuffers[i], pipelineLayouts[1], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshTransforms), &RenderComponent::identity);
-		vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(spline->vertices.size()), 1, 0, 0);
-
-		/*VkBuffer directionBuffers[] = { spline->directionBuffer->buffer };
-		VkDeviceSize dOffsets[] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, directionBuffers, dOffsets);
-		vkCmdPushConstants(commandBuffers[i], pipelineLayouts[1], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshTransforms), &spline->tVert);
-		vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(spline->direction.size()), 1, 0, 0);*/
-	}
-
-	vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[1]);
 
 	if(drawMesh){
 		for(Spring *spring : Storage::springs){
@@ -2912,124 +2824,12 @@ void Vulkan::recordCommandBuffer(size_t i){
 		}
 	}
 
-	/*vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[2]);
-
-	for(SpringSystem* system : Storage::sSystems){
-		VkBuffer vertexBuffers[] = { system->vertexBuffer->buffer };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-		vkCmdPushConstants(commandBuffers[i], pipelineLayouts[2], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshTransforms), &RenderComponent::identity);
-		vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(system->vertices.size()), 1, 0, 0);
-	}*/
-
-	vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[0]);
-
-	for(int j = 0; j < Storage::particles.size(); ++j){
-		RenderComponent *rObj = Storage::particles[j]->getWObject()->renderComponent;
-
-		// Binding the vertex buffer
-		/**
-		 * The last two parameters specify the array of vertex buffers to bind and the byte offsets to start reading
-		 * vertex data from.
-		 */
-		VkBuffer vertexBuffers[] = { rObj->vertexBuffer->buffer };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-
-		// Index buffer
-		vkCmdBindIndexBuffer(commandBuffers[i], rObj->indexBuffer->buffer, 0, VK_INDEX_TYPE_UINT16);
-
-		vkCmdPushConstants(commandBuffers[i], pipelineLayouts[0], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshTransforms), &rObj->transforms);
-
-		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(rObj->mesh.indices.size()), 1, 0, 0, 0);
-	}
-
-	vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_COMPUTE, graphicsPipelines[3]);
-
 	// End render pass
 	vkCmdEndRenderPass(commandBuffers[i]);
 
 	// Finish recording the command buffer:
 	if(vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS){
 		throw std::runtime_error("failed to record command buffer!");
-	}
-
-	/** ################ */
-
-	/*if(vkBeginCommandBuffer(commandBuffers[i+2], &beginInfo) != VK_SUCCESS){
-		throw std::runtime_error("failed to begin recording command buffer!");
-	}
-
-	vkCmdBeginRenderPass(commandBuffers[i+2], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-	vkCmdBindPipeline(commandBuffers[i+2], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[1]);
-	vkCmdBindDescriptorSets(commandBuffers[i+2], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, cmdDescriptorSets.size(), cmdDescriptorSets.data(), 0, nullptr);
-
-	//vkCmdSetLineWidth(commandBuffers[i+2], 2);
-	for(Bspline *spline : Storage::splines){
-		VkBuffer vertexBuffers[] = { spline->vertexBuffer->buffer };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffers[i+2], 0, 1, vertexBuffers, offsets);
-		vkCmdDraw(commandBuffers[i+2], static_cast<uint32_t>(spline->vertices.size()), 1, 0, 0);
-	}
-
-	vkCmdEndRenderPass(commandBuffers[i+2]);
-
-	if(vkEndCommandBuffer(commandBuffers[i+2]) != VK_SUCCESS){
-		throw std::runtime_error("failed to record command buffer!");
-	}*/
-}
-
-void Vulkan::recordComputeMassCommandBuffer(){
-	vkDeviceWaitIdle(device);
-	vkResetCommandBuffer(computeCommandBuffer, 0);
-
-	VkCommandBufferBeginInfo beginInfo = {};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-	beginInfo.pInheritanceInfo = nullptr; // Optional
-
-	if(vkBeginCommandBuffer(computeCommandBuffer, &beginInfo) != VK_SUCCESS){
-		throw std::runtime_error("failed to begin recording compute command buffer!");
-	}
-
-	std::vector<VkDescriptorSet> massDescriptorSets = {descriptorSets[3].set[0], descriptorSets[4].set[0] };
-	vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayouts[3], 0, massDescriptorSets.size(), massDescriptorSets.data(), 0, nullptr);
-
-	vkCmdBindPipeline(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, graphicsPipelines[3]);
-	for(SpringSystem* system : Storage::sSystems){
-		vkCmdDispatch(computeCommandBuffer, system->glPoints.size(), 1, 1);
-	}
-
-	// Finish recording the command buffer:
-	if(vkEndCommandBuffer(computeCommandBuffer) != VK_SUCCESS){
-		throw std::runtime_error("failed to record compute command buffer!");
-	}
-}
-
-void Vulkan::recordComputeSpringCommandBuffer(){
-	vkDeviceWaitIdle(device);
-	vkResetCommandBuffer(computeCommandBuffer, 0);
-
-	VkCommandBufferBeginInfo beginInfo = {};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-	beginInfo.pInheritanceInfo = nullptr; // Optional
-
-	if(vkBeginCommandBuffer(computeCommandBuffer, &beginInfo) != VK_SUCCESS){
-		throw std::runtime_error("failed to begin recording compute command buffer!");
-	}
-
-	std::vector<VkDescriptorSet> springDescriptorSets = { descriptorSets[3].set[0], descriptorSets[4].set[0],  descriptorSets[5].set[0] };
-	vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayouts[4], 0, springDescriptorSets.size(), springDescriptorSets.data(), 0, nullptr);
-
-	vkCmdBindPipeline(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, graphicsPipelines[4]);
-	for(SpringSystem* system : Storage::sSystems){
-		vkCmdDispatch(computeCommandBuffer, system->glSprings.size(), 1, 1);
-	}
-
-	// Finish recording the command buffer:
-	if(vkEndCommandBuffer(computeCommandBuffer) != VK_SUCCESS){
-		throw std::runtime_error("failed to record compute command buffer!");
 	}
 }
 

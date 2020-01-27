@@ -1,11 +1,18 @@
 #include "Game.h"
+#include "data.h"
+
+int noPoints = 10;
 
 int main(int argc, char** argv){
 	Game game;
 
 	int scene = 1;
-	if(argc == 2){
+	if(argc >= 2){
 		scene = atoi(argv[1]);
+	}
+
+	if(argc >= 3){
+		noPoints = atoi(argv[2]);
 	}
 
 	srand(time(0));

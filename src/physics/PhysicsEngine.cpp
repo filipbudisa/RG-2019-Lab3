@@ -33,28 +33,6 @@ void PhysicsEngine::update(double time){
 	timeResidue = time;
 }
 
-void PhysicsEngine::update(double time, Graphics* graphics){
-	time += timeResidue;
-
-	while((time - TIME_DELTA) > 0){
-		/*for(IPhysicsComponent* physComp : physComps){
-			physComp->resetForce();
-		}
-
-		for(IPhysicsComponent* physComp : physComps){
-			physComp->update(TIME_DELTA);
-		}
-
-		graphics->setSSystems(); */
-
-		graphics->doCompute();
-
-		time -= TIME_DELTA;
-	}
-
-	timeResidue = time;
-}
-
 void PhysicsEngine::cleanup(){
 	for(CollisionComponent* c : colComps){
 		c->cleanup();

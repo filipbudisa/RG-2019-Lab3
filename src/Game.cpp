@@ -43,12 +43,6 @@ void staticKeyCallback(GLFWwindow *window, int key, int scancode, int action, in
 		case GLFW_KEY_X:
 			code = 6;
 			break;
-		case GLFW_KEY_1:
-			if(on) staticGame->loadScene(1);
-			break;
-		case GLFW_KEY_2:
-			if(on) staticGame->loadScene(2);
-			break;
 		case GLFW_KEY_F:
 			if(on) Storage::worldObjects[1]->renderComponent->pipeline = 2 * !Storage::worldObjects[1]->renderComponent->pipeline;
 			break;
@@ -85,8 +79,6 @@ void Game::init(int scene){
 	Storage::init(graphics);
 	world = new World();
 	loadScene(scene);
-
-	graphics->initCompute();
 
 	player = new Player(graphics->getCamera());
 	staticPlayer = player;
@@ -134,8 +126,8 @@ void Game::updateLogic(){
 		printf("Time: %ds\n", t2);
 	}
 
+	physics->update(elapsed);
 	world->update(elapsed);
-	physics->update(elapsed, graphics);
 	player->update(elapsed);
 }
 

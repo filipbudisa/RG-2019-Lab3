@@ -6,7 +6,6 @@
 #include "../world/WorldObject.h"
 #include "../graphics/Graphics.h"
 #include "../curves/Bspline.h"
-#include "../particlesystem/Particle.h"
 #include "../springsystem/MassPoint.h"
 #include "../springsystem/Spring.h"
 #include "../springsystem/SpringSystem.h"
@@ -18,7 +17,6 @@ public:
 	static std::vector<RenderComponent*> renderObjects;
 	static std::vector<WorldObject*> worldObjects;
 	static std::vector<Bspline*> splines;
-	static std::vector<Particle*> particles;
 	static std::vector<Spring*> springs;
 	static std::vector<SpringSystem*> sSystems;
 
@@ -27,10 +25,6 @@ public:
 
 	static void clearGarbage();
 	static void cleanup();
-	static void dereg();
-
-	static void addParticle(Particle* p);
-	static void removeParticle(Particle* p);
 
 	static void removeWorldObject(WorldObject *wObj);
 

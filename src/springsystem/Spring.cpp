@@ -18,10 +18,6 @@ void Spring::update(double time){
 
 	points.first->addForce(direction * (float) (force / 2.0));
 	points.second->addForce(direction * (float) (force / -2.0));
-
-	glPoints.first->force += direction * (float) (force / 2.0);
-	glPoints.second->force += direction * (float) (force / -2.0);
-
 }
 
 void Spring::updateVertices(){
@@ -36,8 +32,6 @@ void Spring::setSystem(SpringSystem *system){
 	MassPoint* b = system->getPoint(pointsIndexes.second);
 
 	points = { a, b };
-
-	glPoints = { &system->glPoints[pointsIndexes.first], &system->glPoints[pointsIndexes.second] };
 
 	glm::vec3 posa = a->getPosition() * system->object->scale + system->object->position;
 	glm::vec3 posb = b->getPosition() * system->object->scale + system->object->position;

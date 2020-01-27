@@ -19,8 +19,6 @@ public:
 
 	void init();
 	void initData();
-	void initCompute();
-	void doCompute();
 	void drawFrame();
 	void wait();
 	void clear();
@@ -28,12 +26,6 @@ public:
 
 	void regObject(RenderComponent *rObj);
 	void deregObject(RenderComponent *rObj);
-
-	void regMass(SpringSystem *system);
-	void deregMass(SpringSystem *system);
-
-	void regSpline(Bspline *spline);
-	void deregSpline(Bspline *spline);
 
 	void regSpring(Spring *spring);
 	void deregSpring(Spring *spring);
@@ -49,7 +41,6 @@ private:
 	VmaAllocator allocator;
 
 	void setCamera();
-	void setParticles();
 	BufferAllocation* allocate(VkDeviceSize size, VkBufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage);
 	void upload(BufferAllocation *allocation, VkDeviceSize size, void *data);
 	void upload(BufferAllocation *allocation, VkDeviceSize size, void *data, VkDeviceSize offset);

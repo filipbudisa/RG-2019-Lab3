@@ -21,26 +21,9 @@ void Graphics::initData(){
 		regObject(Storage::renderObjects[i]);
 	}
 
-	for(int i = 0; i < Storage::splines.size(); i++){
-		regSpline(Storage::splines[i]);
-	}
-
 	for(int i = 0; i < Storage::springs.size(); i++){
 		regSpring(Storage::springs[i]);
 	}
-
-	for(int i = 0; i < Storage::sSystems.size(); i++){
-		regMass(Storage::sSystems[i]);
-	}
-}
-
-void Graphics::initCompute(){
-	vulk.prepareCompute();
-}
-
-void Graphics::doCompute(){
-	vulk.doComputeSprings();
-	vulk.doComputeMass();
 }
 
 void Graphics::regObject(RenderComponent *rObj){
@@ -59,37 +42,6 @@ void Graphics::deregObject(RenderComponent *rObj){
 	vmaDestroyBuffer(allocator, rObj->indexBuffer->buffer, rObj->indexBuffer->allocation);
 }
 
-void Graphics::regMass(SpringSystem *system){
-	system->pointBuffer = allocate(system->glPoints.size() * sizeof(glMassPoint),
-								  VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-
-	system->springBuffer = allocate(system->glSprings.size() * sizeof(glSpring),
-								   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-
-	upload(system->pointBuffer, system->glPoints.size() * sizeof(glMassPoint), system->glPoints.data());
-	upload(system->springBuffer, system->glSprings.size() * sizeof(glSpring), system->glSprings.data());
-}
-
-void Graphics::deregMass(SpringSystem *system){
-	vmaDestroyBuffer(allocator, system->pointBuffer->buffer, system->pointBuffer->allocation);
-	vmaDestroyBuffer(allocator, system->springBuffer->buffer, system->pointBuffer->allocation);
-}
-
-void Graphics::regSpline(Bspline *spline){
-	spline->vertexBuffer = allocate(spline->vertices.size() * sizeof(Vertex),
-								  VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-	spline->directionBuffer = allocate(spline->direction.size() * sizeof(Vertex),
-									VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-
-	upload(spline->vertexBuffer, spline->vertices.size() * sizeof(Vertex), spline->vertices.data());
-	upload(spline->directionBuffer, spline->direction.size() * sizeof(Vertex), spline->direction.data());
-}
-
-void Graphics::deregSpline(Bspline *spline){
-	vmaDestroyBuffer(allocator, spline->vertexBuffer->buffer, spline->vertexBuffer->allocation);
-	vmaDestroyBuffer(allocator, spline->directionBuffer->buffer, spline->directionBuffer->allocation);
-}
-
 void Graphics::regSpring(Spring *spring){
 	spring->vertexBuffer = allocate(2 * sizeof(Vertex),
 									VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
@@ -100,6 +52,7 @@ void Graphics::regSpring(Spring *spring){
 void Graphics::deregSpring(Spring *spring){
 	vmaDestroyBuffer(allocator, spring->vertexBuffer->buffer, spring->vertexBuffer->allocation);
 }
+
 
 BufferAllocation *Graphics::allocate(VkDeviceSize size, VkBufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage){
 	VkBufferCreateInfo bufferInfo = {};
@@ -222,8 +175,7 @@ void Graphics::upload(BufferAllocation *allocation, VkDeviceSize size, void *dat
 void Graphics::drawFrame(){
 	Storage::clearGarbage();
 	setCamera();
-	setParticles();
-	//setSSystems();
+	setSSystems();
 	vulk.drawFrame();
 }
 
@@ -257,25 +209,6 @@ void Graphics::setCamera(){
 	vulk.uniformBufferObjects.viewProj.view = glm::lookAt(position, direction, UP) * translate;
 }
 
-void Graphics::setParticles(){
-	glm::vec3 eye = camera.getPosition();
-
-	for(Particle* p : Storage::particles){ // Dorian Brmbota
-		WorldObject* wObj = p->getWObject();
-		glm::vec3 pLoc = wObj->position;
-
-		glm::vec3 rot = glm::normalize(eye - pLoc);
-		glm::quat rotation = glm::rotation(wObj->renderComponent->mesh.vertices[0].normal, rot);
-
-		rot *= sin(p->getRotation()/2);
-		glm::quat rotation2(cos(p->getRotation()/2), rot);
-
-		wObj->rotation = rotation2 * rotation;
-
-		wObj->setTransformation();
-	}
-}
-
 void Graphics::setSSystems(){
 	if(drawMesh){
 		for(Spring *spring : Storage::springs){
@@ -285,13 +218,7 @@ void Graphics::setSSystems(){
 
 	for(SpringSystem* system : Storage::sSystems){
 		RenderComponent* rObj = system->object->renderComponent;
-		// todo: glVertex format prije uploada
-		//upload(rObj->vertexBuffer, rObj->mesh.vertices.size() * sizeof(Vertex), rObj->mesh.vertices.data());
-		//upload(system->pointBuffer, system->glPoints.size() * sizeof(glMassPoint), system->glPoints.data());
-
-		for(int i = 0; i < system->glPoints.size(); i++){
-			upload(system->pointBuffer, sizeof(glm::vec4), &system->glPoints[i].force, i * sizeof(glMassPoint));
-		}
+		upload(rObj->vertexBuffer, rObj->mesh.vertices.size() * sizeof(Vertex), rObj->mesh.vertices.data());
 	}
 }
 

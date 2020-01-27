@@ -23,19 +23,15 @@ void MassPoint::update(double time){
 
 	// damping
 	force += velocity * -3.0f;
+
+	// gravity
 	force += glm::vec3( 0, 0, -9.81 );
 
 	// velocity
-	glm::vec3 vl = velocity;
-	if(glm::length(velLast) < 0.001) velLast = velocity;
 	velocity = velocity + force * (float) time;
-	velLast = vl;
 
 	// position
-	glm::vec3 pl = vertex->pos;
-	if(glm::length(posLast) < 0.001) posLast = vertex->pos;
-	vertex->pos = vertex->pos + velocity * (float) time ; //+ force * (float) pow(time, 2) / 2.0f;
-	posLast = pl;
+	vertex->pos = vertex->pos + velocity * (float) time ;
 }
 
 glm::vec3 MassPoint::getPosition() const{

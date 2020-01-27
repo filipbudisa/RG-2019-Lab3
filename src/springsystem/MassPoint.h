@@ -32,8 +32,6 @@ private:
 	//glm::vec3 position;
 	Vertex* vertex;
 	MeshTransforms* transforms;
-	glm::vec3 posLast = { 0, 0, 0 };
-	glm::vec3 velLast = { 0, 0, 0 };
 	glm::vec3 velocity = { 0, 0, 0 };
 	glm::vec3 force;
 	bool fixed = false;
