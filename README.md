@@ -1,7 +1,7 @@
 # Simulacija tkanina
 ![Scena 3](https://raw.githubusercontent.com/filipbudisa/RG-2019-Lab3/master/res/lab.png)
 
-Simulacija tkanina pomoću sistema opruga.
+U ovom projektu ostvarena je simulacija tkanine pomoću sistema opruga. Koriste se tri tipa opruga između točaka tkanine koji simuliraju strukturalnu čvrstoću tkanine, otpor tkanine na smicanje, te otpor na savijanje. Iscrtavanje scene vrši se pomoću Vulkan sučelja, dok se izračuni opruga te kolizija izvršavaju na procesoru, nakon čega se učitavaju u memoriju grafičkog koprocesora.
 
 ![opruge](https://www.ics.uci.edu/~shz/courses/cs114/docs/proj3/images/fig1.jpg)
 
