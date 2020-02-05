@@ -196,13 +196,13 @@ struct UBOLights {
 };
 
 struct UniformBuffer {
-	VkBuffer buffer[MAX_FRAMES_IN_FLIGHT+1];
-	VkDeviceMemory memory[MAX_FRAMES_IN_FLIGHT+1];
+	std::vector<VkBuffer> buffer;
+	std::vector<VkDeviceMemory> memory;
 };
 
 struct DescriptorSet {
 	VkDescriptorSetLayout layout;
-	VkDescriptorSet set[MAX_FRAMES_IN_FLIGHT+1];
+	std::vector<VkDescriptorSet> set;
 };
 
 class Vulkan {

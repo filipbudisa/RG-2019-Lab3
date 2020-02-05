@@ -2296,6 +2296,12 @@ uint32_t Vulkan::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags prope
 void Vulkan::createUniformBuffers(){
 	uniformBuffers.resize(2);
 
+	uniformBuffers[0].buffer.resize(swapChainImages.size());
+	uniformBuffers[1].buffer.resize(swapChainImages.size());
+
+	uniformBuffers[0].memory.resize(swapChainImages.size());
+	uniformBuffers[1].memory.resize(swapChainImages.size());
+
 	for(size_t i = 0; i < swapChainImages.size(); i++){
 		createBuffer(sizeof(UBOViewProj), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -2311,18 +2317,17 @@ void Vulkan::createUniformBuffers(){
  * https://vulkan-tutorial.com/Uniform_buffers/Descriptor_pool_and_sets
  */
 void Vulkan::createDescriptorPool(){
-	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
+	std::array<VkDescriptorPoolSize, 1> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSizes[0].descriptorCount = static_cast<uint32_t>(2 * swapChainImages.size()); // TODO: descriptor count
-	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = static_cast<uint32_t>(2 * swapChainImages.size());
+
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());;
 	poolInfo.pPoolSizes = poolSizes.data();
 
-	poolInfo.maxSets = static_cast<uint32_t>(4 * swapChainImages.size());
+	poolInfo.maxSets = static_cast<uint32_t>(2 * swapChainImages.size());
 
 	if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor pool!");
@@ -2330,8 +2335,11 @@ void Vulkan::createDescriptorPool(){
 }
 
 void Vulkan::createDescriptorSets(){
-	createBufferDescriptorSet(descriptorSets[0].layout, descriptorSets[0].set, uniformBuffers[0], sizeof(UBOViewProj));
-	createBufferDescriptorSet(descriptorSets[1].layout, descriptorSets[1].set, uniformBuffers[1], sizeof(UBOLights));
+	descriptorSets[0].set.resize(swapChainImages.size());
+	descriptorSets[1].set.resize(swapChainImages.size());
+
+	createBufferDescriptorSet(descriptorSets[0].layout, descriptorSets[0].set.data(), uniformBuffers[0], sizeof(UBOViewProj));
+	createBufferDescriptorSet(descriptorSets[1].layout, descriptorSets[1].set.data(), uniformBuffers[1], sizeof(UBOLights));
 	//createImageDescriptorSet(descriptorSets[2].layout, descriptorSets[2].set, textureImageView, textureSampler);
 }
 
