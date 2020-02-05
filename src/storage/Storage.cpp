@@ -52,11 +52,6 @@ void Storage::cleanup(){
 		graphics->deregSpring(Storage::springs[i]);
 	}
 
-	for(RenderComponent* rObj : renderObjects){
-		graphics->deregObject(rObj);
-		delete rObj;
-	}
-
 	for(WorldObject* wObj : worldObjects){
 		wObj->cleanup();
 		delete wObj;
