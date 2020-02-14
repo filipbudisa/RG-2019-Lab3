@@ -17,19 +17,19 @@ class RenderComponent {
 public:
 	RenderComponent(const Mesh &mesh);
 
+	void calculateNormals();
+
 	static MeshTransforms identity;
 
 	Mesh mesh;
 
 	MeshTransforms transforms;
-
 	BufferAllocation *vertexBuffer = nullptr;
+
 	BufferAllocation *indexBuffer = nullptr;
 
 	unsigned pipeline;
-
 private:
-	void calculateNormals();
 };
 
 

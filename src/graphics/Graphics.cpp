@@ -218,6 +218,7 @@ void Graphics::setSSystems(){
 
 	for(SpringSystem* system : Storage::sSystems){
 		RenderComponent* rObj = system->object->renderComponent;
+		rObj->calculateNormals();
 		upload(rObj->vertexBuffer, rObj->mesh.vertices.size() * sizeof(Vertex), rObj->mesh.vertices.data());
 	}
 }
