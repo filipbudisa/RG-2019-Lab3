@@ -326,7 +326,7 @@ void Vulkan::updateUniformBuffer(uint32_t currentImage){
 	// Lights UBO
 
 	//uniformBufferObjects.lights.lights[0].pos = glm::vec3(2*cos(time), 2*sin(time), 2.0f);
-	uniformBufferObjects.lights.lights[0].pos = glm::vec3(1.5f, 1.0f, 3.0f);
+	uniformBufferObjects.lights.lights[0].pos = glm::vec3(3, 3, 10.0f);
 	uniformBufferObjects.lights.lights[0].color = glm::vec3(1.0f, 1.0f, 1.0f);
 
 	vkMapMemory(device, uniformBuffers[1].memory[currentImage], 0, sizeof(UBOLights), 0, &data);

@@ -28,7 +28,7 @@ void main() {
     gl_Position[2] /= 5.0;
 
     fragColor = vec3(inColor);
-    position = inPosition;
+    position = vec3(pos) / pos[3];
 
     vec4 fragNormalH = uniformTransform.nTransform * vec4(normal, 1);
     fragNormal = normalize(vec3(fragNormalH) / fragNormalH[3]);
